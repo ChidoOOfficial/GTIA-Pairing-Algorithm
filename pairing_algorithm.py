@@ -25,13 +25,19 @@ def get_scores_matrix(data_ambs, data_stud):
     possible_results.sort()
     return res, possible_results
 
-def run_match(data_ambs, data_stud, score_matrix, poss_scores, max_assignment='auto'):
+def run_match(data_ambs, data_stud, score_matrix, poss_scores, max_assignment='auto', initial_max_assignment='auto'):
+    excess = 0
     if max_assignment=='auto':
         max_assignment = math.ceil(len(data_stud)/len(data_ambs))
+        initial_max_assignment = len(data_stud)//len(data_ambs)
+        excess = len(data_stud) - initial_max_assignment * len(data_ambs)
+
 
     ambs = {}
     for i in range(len(data_ambs)):
         ambs[i] = []
+
+    excess_assigned = 0
 
     amb_orders = list(range(len(data_ambs)))
     stud_orders = list(range(len(data_stud)))
@@ -46,10 +52,12 @@ def run_match(data_ambs, data_stud, score_matrix, poss_scores, max_assignment='a
 
         for i in amb_orders:
             for j in stud_orders:
-                if score_matrix[i][j] == curr_score[0] and not assigned[j] and len(ambs[i]) < max_assignment:
+                if score_matrix[i][j] == curr_score[0] and not assigned[j] and (len(ambs[i]) < initial_max_assignment or (len(ambs[i]) < max_assignment and excess_assigned < excess)):
                     ambs[i].append(data_stud[j])
                     assigned[j] = True
                     found_match = True
+                    if len(ambs[i]) == max_assignment:
+                        excess_assigned += 1
                     break
         if not found_match:
             curr_score = curr_score[1:]
@@ -57,6 +65,12 @@ def run_match(data_ambs, data_stud, score_matrix, poss_scores, max_assignment='a
     ambs_result = []
     for i in range(len(data_ambs)):
         ambs_result.append((data_ambs[i], ambs[i]))
+
+    def key(amb):
+        return amb[0]['Name']
+
+    ambs_result.sort(key=key)
+
 
     return ambs_result
 
